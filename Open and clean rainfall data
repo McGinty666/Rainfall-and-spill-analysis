@@ -1,0 +1,42 @@
+import pandas as pd
+from datetime import datetime, timedelta
+
+# Define the file path
+file_path = "C:\\Users\\RMCGINT\\OneDrive - Wessex Water\\Python\\west bexington rainfall 2024.csv"
+
+# Define the starting row and start time
+start_row = 15
+start_time = datetime.strptime("01/01/2024 00:00", "%d/%m/%Y %H:%M")
+
+# Read the CSV file from the specified starting row
+df = pd.read_csv(file_path, skiprows=start_row-1)
+
+# Replace all 99 values with 0
+df.replace(99, 0, inplace=True)
+
+# Report the highest value in the dataframe
+highest_value = df.max().max()
+print(f"The highest value in the dataframe is {highest_value}")
+
+# Create a new column 'mean rainfall'
+df['mean rainfall'] = df.mean(axis=1)
+
+# Create a timestamp column for time series analysis
+df.insert(0, 'timestamp', [start_time + timedelta(minutes=5*i) for i in range(len(df))])
+
+# Function to calculate antecedent rainfall
+def calculate_antecedent_rainfall(df, X, hours):
+    end_time = datetime.strptime(X, "%d/%m/%Y %H:%M")
+    start_time = end_time - timedelta(hours=hours)
+    mask = (df['timestamp'] >= start_time) & (df['timestamp'] <= end_time)
+    antecedent_rainfall = df.loc[mask, 'mean rainfall'].sum() / 12
+    return antecedent_rainfall
+
+# Example usage
+X = "03/01/2024 12:00"  # User-specified time
+hours = 12  # User-specified number of hours
+antecedent_rainfall = calculate_antecedent_rainfall(df, X, hours)
+print(f"The antecedent rainfall over the last {hours} hours from {X} is {antecedent_rainfall}")
+
+# Display the dataframe
+print(df.head())
