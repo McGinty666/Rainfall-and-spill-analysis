@@ -13,8 +13,11 @@ The first I have tested in logistic regression.
 The potential use of this type of analysis could be:
 
 *Understanding if there is any correlation or predictive potential at all, or there are dry spills, indicating operations issues such as blockages or failed pumps etc. 
+
 *Making a before and after comparison of the correlation given an event (following sewer lining works to prevent infiltration, for example). (comparing Anual spill frequencies with varying rainfall can't provide a good like for like comparison)
+
 *In a particularly large catchment, which encompasses a number radar ranfall grids, is there a particularly strong correlation with any of them? (Indicating areas for further investigation for Impermeable area or infiltration surveys).
+
 *The antecedent rainfall is collected over a number of hours to be specified by the user. Sensitivity to a particular duration can give some indication to the mechanism of the rainfall - runoff response in the sewer system. A sharp rise and fall (high correlation for low hours) indicates impermeable area, a slow one (high correlation for higher hours) suggests there could be an issue of infiltration.
 
 
