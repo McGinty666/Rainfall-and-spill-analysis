@@ -1,0 +1,123 @@
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+# Define the file paths
+sump_level_file = r'C:\Users\RMCGINT\OneDrive - Wessex Water\Python\West bexingfton sump level from Jan 2024.xlsx'
+rainfall_file = r'C:\Users\RMCGINT\OneDrive - Wessex Water\Python\spill rainfall correlaor files\west bexington rainfall from 1-10-2023.xlsx'
+
+# Define the starting row and start time for rainfall data
+start_row = 21
+rainfall_start_time = datetime.strptime("01/10/2023 00:00", "%d/%m/%Y %H:%M")
+
+# Read the Excel file for sump level data
+df_sump = pd.read_excel(sump_level_file, sheet_name='Sheet1', header=None)
+df_sump.columns = ["signal", "time", "level"]
+df_sump["time"] = pd.to_datetime(df_sump["time"])
+
+# Filter the sump level DataFrame to include only data within the specified time range
+start_time = "2024-01-01 00:00:00"
+end_time = "2024-04-18 00:00:00"
+df_sump_filtered = df_sump[(df_sump["time"] >= start_time) & (df_sump["time"] <= end_time)].copy()
+
+# Read the Excel file for rainfall data
+df_rainfall = pd.read_excel(rainfall_file, sheet_name='Sheet1', skiprows=start_row-1)
+df_rainfall.replace(99, 0, inplace=True)
+df_rainfall['mean rainfall'] = df_rainfall.mean(axis=1)
+df_rainfall.insert(0, 'timestamp', [rainfall_start_time + timedelta(minutes=5*i) for i in range(len(df_rainfall))])
+
+# Function to calculate antecedent rainfall
+def calculate_antecedent_rainfall(df, X, hours):
+    end_time = datetime.strptime(X, "%d/%m/%Y %H:%M")
+    start_time = end_time - timedelta(hours=hours)
+    mask = (df['timestamp'] >= start_time) & (df['timestamp'] <= end_time)
+    antecedent_rainfall = df.loc[mask, 'mean rainfall'].sum() / 12
+    return antecedent_rainfall
+
+# Create a new DataFrame to store the results
+results = []
+
+antecedent_hours = 12
+
+# Calculate antecedent rainfall for each day in the sump level DataFrame
+for date in df_sump_filtered["time"].dt.date.unique():
+    date_str = date.strftime("%d/%m/%Y %H:%M")
+    antecedent_rainfall = calculate_antecedent_rainfall(df_rainfall, date_str, antecedent_hours)
+    results.append({"date": date, "antecedent_rainfall": antecedent_rainfall})
+
+df_results = pd.DataFrame(results)
+
+# Add a boolean column to report if the threshold is exceeded
+threshold = 1600
+df_results["threshold_exceeded"] = df_results["date"].apply(lambda x: any(df_sump_filtered[df_sump_filtered["time"].dt.date == x]["level"] > threshold))
+
+# Prepare data for logistic regression
+X = df_results[["antecedent_rainfall"]]
+y = df_results["threshold_exceeded"]
+
+# Split the data into training and testing sets (75/25 split)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+
+# Train the logistic regression model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Predict on the test set and calculate accuracy
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy}")
+
+# Plot the S curve with true and false values in different colours
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test[y_test == True], y_test[y_test == True], color='red', label='True')
+plt.scatter(X_test[y_test == False], y_test[y_test == False], color='blue', label='False')
+
+# Plot the logistic regression curve
+X_range = np.linspace(X_test.min(), X_test.max(), 300).reshape(-1, 1)
+y_prob = model.predict_proba(X_range)[:, 1]
+plt.plot(X_range, y_prob, color='green', linewidth=2)
+
+plt.xlabel("Antecedent Rainfall (mm)")
+plt.ylabel("Probability of Threshold Exceeded")
+plt.title("Logistic Regression S Curve, for antecedent rainfall over a "+str(antecedent_hours)+" hour period")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+# Train the logistic regression model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Predict on the training set and calculate accuracy
+y_train_pred = model.predict(X_train)
+train_accuracy = accuracy_score(y_train, y_train_pred)
+print(f"Training Accuracy: {train_accuracy}")
+
+# Predict on the test set and calculate accuracy
+y_test_pred = model.predict(X_test)
+test_accuracy = accuracy_score(y_test, y_test_pred)
+print(f"Test Accuracy: {test_accuracy}")
+
+# Plot the S curve with true and false values in different colours
+plt.figure(figsize=(10, 6))
+plt.scatter(X_test[y_test == True], y_test[y_test == True], color='red', label='True')
+plt.scatter(X_test[y_test == False], y_test[y_test == False], color='blue', label='False')
+
+# Plot the logistic regression curve
+X_range = np.linspace(X_test.min(), X_test.max(), 300).reshape(-1, 1)
+y_prob = model.predict_proba(X_range)[:, 1]
+plt.plot(X_range, y_prob, color='green', linewidth=2)
+
+plt.xlabel("Antecedent Rainfall (mm)")
+plt.ylabel("Probability of Threshold Exceeded")
+plt.title("Logistic Regression S Curve, for antecedent rainfall over a " + str(antecedent_hours) + " hour period")
+plt.legend()
+plt.grid(True)
+plt.show()
