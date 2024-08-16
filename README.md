@@ -1,7 +1,10 @@
 # Rainfall-and-spill-analysis
 
 The intention of the code developed here is to investigate how the rainfall recorded in a catchment can be related to environmetal spills, as per instrumentation from a Sewage pump station or other analog level sensor at an overflow. 
-Tackling this programatically saves time vs manipulating the data in excel and making subjective visual comparisons, with hope the user only needs to change the path of the data files to be studied, you only need to worry about downloading it, pointing to it, specifying date ranges.
+
+Tackling this programatically saves time vs manipulating the data in excel and making visual comparisons, with hope the user only needs to change the path of the data files to be studied, you only need to worry about downloading it, pointing to it, specifying date ranges.
+
+Nontheless a quick inspection of the data is recommended to start with, hence the import and visualization python notebook.
 
 A number of machine learning packages are available which could relate positve numbers on the real line (rainfall) to a binary response (spilling or nor spilling in this case).
 
